@@ -914,6 +914,7 @@ function processItem(item, source) {
   const type     = classifyType(rawTitle + ' ' + rawDesc);
   const needsTr  = source.lang === 'hu';
 
+  const kp = extractKeyPoints(rawDesc);
   return {
     title:          rawTitle || '(no title)',
     summary:        rawDesc  || '(no summary)',
@@ -926,9 +927,17 @@ function processItem(item, source) {
     url:            item.link || '',
     thumb:          item.thumb || '',
     lang:           source.lang,
-    keyPoints:      extractKeyPoints(rawDesc),
+    keyPoints:      kp,
     needsTranslation: needsTr,
-    translated:     !needsTr
+    translated:     !needsTr,
+    showingTranslation: false,
+    // originals preserved for toggle
+    origTitle:      rawTitle || '(no title)',
+    origSummary:    rawDesc  || '(no summary)',
+    origKeyPoints:  kp,
+    transTitle:     null,
+    transSummary:   null,
+    transKeyPoints: null,
   };
 }
 
@@ -949,30 +958,60 @@ async function googleTranslate(text, sourceLang = 'hu') {
 
 async function translateCard(idx) {
   const item = allItems[idx];
-  if (!item || item.translated) return;
+  if (!item || !item.needsTranslation) return;
+
+  // Already translated — just toggle to EN view
+  if (item.transTitle) {
+    showTranslation(idx, true);
+    return;
+  }
+
   const btn = document.querySelector(`[data-translate="${idx}"]`);
   if (btn) { btn.disabled = true; btn.textContent = 'Translating…'; }
 
   const [title, summary] = await Promise.all([
-    googleTranslate(item.title),
-    googleTranslate(item.summary)
+    googleTranslate(item.origTitle),
+    googleTranslate(item.origSummary)
   ]);
-  const kpTranslated = await Promise.all((item.keyPoints || []).map(kp => googleTranslate(kp)));
+  const kp = await Promise.all((item.origKeyPoints || []).map(p => googleTranslate(p)));
 
-  item.title     = title;
-  item.summary   = summary;
-  item.keyPoints = kpTranslated;
-  item.translated = true;
-  item.lang       = 'en';
+  item.transTitle     = title;
+  item.transSummary   = summary;
+  item.transKeyPoints = kp;
+  item.translated     = true;
+
+  showTranslation(idx, true);
+}
+
+function showTranslation(idx, showEN) {
+  const item = allItems[idx];
+  if (!item) return;
+  item.showingTranslation = showEN;
+
+  const title   = showEN ? item.transTitle   : item.origTitle;
+  const summary = showEN ? item.transSummary  : item.origSummary;
+  const kp      = showEN ? item.transKeyPoints : item.origKeyPoints;
 
   const card = document.querySelector(`[data-card="${idx}"]`);
-  if (card) {
-    card.querySelector('.card-title').textContent   = title;
-    card.querySelector('.card-summary').textContent = summary;
-    const pts = card.querySelectorAll('.card-points li');
-    kpTranslated.forEach((kp, i) => { if (pts[i]) pts[i].textContent = kp; });
-    if (btn) btn.outerHTML = `<span class="translated-badge">✓ Translated</span>`;
-  }
+  if (!card) return;
+  card.querySelector('.card-title').textContent   = title;
+  card.querySelector('.card-summary').textContent = summary;
+  const pts = card.querySelectorAll('.card-points li');
+  (kp || []).forEach((p, i) => { if (pts[i]) pts[i].textContent = p; });
+
+  const footer = card.querySelector('.card-footer');
+  const existing = footer.querySelector('.trans-toggle-wrap');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('span');
+  wrap.className = 'trans-toggle-wrap';
+  wrap.style.cssText = 'display:flex;align-items:center;gap:6px;';
+  wrap.innerHTML = showEN
+    ? `<span class="translated-badge">✓ EN</span>
+       <button class="translate-btn" onclick="event.stopPropagation();showTranslation(${idx},false)">🇭🇺 Show HU</button>`
+    : `<span class="translated-badge" style="background:#fff8e8;color:#b8721b;border-color:#b8721b;">🇭🇺 HU</span>
+       <button class="translate-btn" onclick="event.stopPropagation();showTranslation(${idx},true)">🌐 Show EN</button>`;
+  footer.appendChild(wrap);
 }
 
 async function translateAll(silent = false) {
@@ -1059,18 +1098,37 @@ function renderFeed() {
     const alertStyle = alerts.length ? `style="--alert-color:${alerts[0].color}"` : '';
     const alertClass = alerts.length ? ' has-alert' : '';
 
-    const kp = item.keyPoints.length
-      ? `<ul class="card-points">${item.keyPoints.map(p=>`<li>${escHtml(p)}</li>`).join('')}</ul>` : '';
+    // Use whichever language the card is currently showing
+    const displayTitle   = item.showingTranslation ? item.transTitle   : item.origTitle;
+    const displaySummary = item.showingTranslation ? item.transSummary  : item.origSummary;
+    const displayKP      = item.showingTranslation ? item.transKeyPoints : item.origKeyPoints;
+
+    const kp = (displayKP || []).length
+      ? `<ul class="card-points">${(displayKP).map(p=>`<li>${escHtml(p)}</li>`).join('')}</ul>` : '';
 
     const link = item.url
       ? `<a class="card-link" href="${escHtml(item.url)}" target="_blank" rel="noopener">${item.sourceType === 'youtube' ? '▶ Watch on YouTube' : 'Read original →'}</a>`
       : '<span></span>';
 
-    const huFlag = item.needsTranslation && !item.translated
+    const huFlag = item.needsTranslation && !item.showingTranslation
       ? `<span style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">🇭🇺 HU</span>` : '';
-    const transBtn = item.needsTranslation && !item.translated
-      ? `<button class="translate-btn" data-translate="${idx}" onclick="event.stopPropagation();translateCard(${idx})">🌐 Translate</button>`
-      : (item.translated && item.needsTranslation ? `<span class="translated-badge">✓ Translated</span>` : '');
+
+    let transBtn = '';
+    if (item.needsTranslation) {
+      if (!item.translated) {
+        transBtn = `<button class="translate-btn" data-translate="${idx}" onclick="event.stopPropagation();translateCard(${idx})">🌐 Translate</button>`;
+      } else if (item.showingTranslation) {
+        transBtn = `<span class="trans-toggle-wrap" style="display:flex;align-items:center;gap:6px;">
+          <span class="translated-badge">✓ EN</span>
+          <button class="translate-btn" onclick="event.stopPropagation();showTranslation(${idx},false)">🇭🇺 Show HU</button>
+        </span>`;
+      } else {
+        transBtn = `<span class="trans-toggle-wrap" style="display:flex;align-items:center;gap:6px;">
+          <span class="translated-badge" style="background:#fff8e8;color:#b8721b;border-color:#b8721b;">🇭🇺 HU</span>
+          <button class="translate-btn" onclick="event.stopPropagation();showTranslation(${idx},true)">🌐 Show EN</button>
+        </span>`;
+      }
+    }
 
     const isYT   = item.sourceType === 'youtube';
     const ytBadge = isYT ? `<span class="yt-badge">▶ YouTube</span>` : '';
@@ -1084,8 +1142,8 @@ function renderFeed() {
         ${huFlag}
         <span class="card-time">${escHtml(item.timeLabel)}</span>
       </div>
-      <h2 class="card-title">${escHtml(item.title)}</h2>
-      <p class="card-summary">${escHtml(item.summary)}</p>
+      <h2 class="card-title">${escHtml(displayTitle)}</h2>
+      <p class="card-summary">${escHtml(displaySummary)}</p>
       ${kp}
       ${alertBadgesHtml}
       <div class="card-footer" onclick="event.stopPropagation()">${link}${transBtn}</div>`;
