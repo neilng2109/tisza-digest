@@ -737,36 +737,42 @@ async function fetchAll() {
   btn.disabled = true;
   label.innerHTML = '<span class="spin"></span> Loading…';
   showSkeletons();
-  showProgress(0);
+  showProgress(null); // indeterminate while parallel fetches run
 
   let successCount = 0;
-  let raw = [];
+  let completed    = 0;
+  const rawBatches = new Array(SOURCES.length).fill([]);
 
-  for (let i = 0; i < SOURCES.length; i++) {
-    const source = SOURCES[i];
-    const pct = Math.round(((i + 1) / SOURCES.length) * 90);
-    setStatus(`Checking ${source.name} (${i+1}/${SOURCES.length})…`, false);
-    showProgress(pct);
-    try {
-      const items = await fetchSource(source);
-      raw = raw.concat(items);
-      if (items.length) successCount++;
-    } catch(e) {
-      console.warn('Source failed:', source.name, e.message);
-    }
-  }
+  setStatus(`Fetching ${SOURCES.length} sources in parallel…`, false);
 
-  // Deduplicate by normalised title
-  const seen   = new Set();
-  const deduped = raw.filter(item => {
-    const key = item.title.toLowerCase().replace(/[^a-z0-9áéíóöőúüűàèìòùâêîôû]/g,'').slice(0, 50);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Fetch all sources simultaneously — each resolves independently
+  const promises = SOURCES.map((source, i) =>
+    fetchSource(source)
+      .then(items => {
+        rawBatches[i] = items;
+        if (items.length) successCount++;
+      })
+      .catch(e => { console.warn('Source failed:', source.name, e.message); })
+      .finally(() => {
+        completed++;
+        const pct = Math.round((completed / SOURCES.length) * 100);
+        showProgress(pct);
+        setStatus(`${completed} of ${SOURCES.length} sources checked…`, false);
 
-  deduped.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-  allItems = deduped;
+        // Render progressively: update feed as each source comes in
+        const raw = rawBatches.flat();
+        if (raw.length) {
+          allItems = dedupe(raw);
+          renderFeed();
+          document.getElementById('translateAllBtn').style.display = 'flex';
+        }
+      })
+  );
+
+  await Promise.allSettled(promises);
+
+  // Final dedup + sort on the complete set
+  allItems = dedupe(rawBatches.flat());
 
   const now = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
 
@@ -783,8 +789,7 @@ async function fetchAll() {
     document.getElementById('translateAllBtn').style.display = 'flex';
 
     // Auto-translate if enabled
-    const autoTranslate = document.getElementById('autoTranslate').checked;
-    if (autoTranslate) {
+    if (document.getElementById('autoTranslate').checked) {
       await translateAll(true);
     }
 
@@ -795,6 +800,18 @@ async function fetchAll() {
 
   btn.disabled = false;
   label.textContent = 'Refresh';
+}
+
+function dedupe(raw) {
+  const seen = new Set();
+  return raw
+    .filter(item => {
+      const key = item.title.toLowerCase().replace(/[^a-z0-9áéíóöőúüűàèìòùâêîôû]/g,'').slice(0, 50);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 }
 
 async function fetchSource(source) {
