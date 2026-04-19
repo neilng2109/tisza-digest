@@ -544,7 +544,12 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+// CORS proxies tried in order — if one fails the next is used
+const CORS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+];
 
 const SOURCES = [
   // ── English news ──
@@ -743,33 +748,39 @@ async function fetchAll() {
   let completed    = 0;
   const rawBatches = new Array(SOURCES.length).fill([]);
 
-  setStatus(`Fetching ${SOURCES.length} sources in parallel…`, false);
+  setStatus(`Fetching ${SOURCES.length} sources…`, false);
 
-  // Fetch all sources simultaneously — each resolves independently
-  const promises = SOURCES.map((source, i) =>
-    fetchSource(source)
-      .then(items => {
+  // Controlled concurrency — max 4 at a time to avoid proxy rate limits
+  const CONCURRENCY = 4;
+  const queue = [...SOURCES.entries()]; // [[index, source], ...]
+
+  async function worker() {
+    while (queue.length) {
+      const [i, source] = queue.shift();
+      try {
+        const items = await fetchSource(source);
         rawBatches[i] = items;
         if (items.length) successCount++;
-      })
-      .catch(e => { console.warn('Source failed:', source.name, e.message); })
-      .finally(() => {
-        completed++;
-        const pct = Math.round((completed / SOURCES.length) * 100);
-        showProgress(pct);
-        setStatus(`${completed} of ${SOURCES.length} sources checked…`, false);
+      } catch(e) {
+        console.warn('Source failed:', source.name, e.message);
+      }
+      completed++;
+      const pct = Math.round((completed / SOURCES.length) * 100);
+      showProgress(pct);
+      setStatus(`${completed} of ${SOURCES.length} sources checked…`, false);
 
-        // Render progressively: update feed as each source comes in
-        const raw = rawBatches.flat();
-        if (raw.length) {
-          allItems = dedupe(raw);
-          renderFeed();
-          document.getElementById('translateAllBtn').style.display = 'flex';
-        }
-      })
-  );
+      // Progressive render as each source arrives
+      const raw = rawBatches.flat();
+      if (raw.length) {
+        allItems = dedupe(raw);
+        renderFeed();
+        document.getElementById('translateAllBtn').style.display = 'flex';
+      }
+    }
+  }
 
-  await Promise.allSettled(promises);
+  // Run CONCURRENCY workers in parallel
+  await Promise.allSettled(Array.from({ length: CONCURRENCY }, worker));
 
   // Final dedup + sort on the complete set
   allItems = dedupe(rawBatches.flat());
@@ -815,11 +826,21 @@ function dedupe(raw) {
 }
 
 async function fetchSource(source) {
-  const proxyUrl = CORS_PROXY + encodeURIComponent(source.url);
-  const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  return parseRSSText(text, source);
+  let lastErr;
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(source.url), {
+        signal: AbortSignal.timeout(7000)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      return parseRSSText(text, source);
+    } catch(e) {
+      lastErr = e;
+      console.warn(`Proxy ${proxy} failed for ${source.name}:`, e.message);
+    }
+  }
+  throw lastErr;
 }
 
 function isRelevant(item) {
