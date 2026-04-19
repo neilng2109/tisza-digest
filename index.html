@@ -632,7 +632,7 @@ const SOURCES = [
   {
     name: 'Telex',
     url: 'https://telex.hu/rss/magyarpeter',
-    lang: 'hu', filtered: true, type: 'news'
+    lang: 'hu', filtered: false, type: 'news'
   },
   // ── YouTube ──
   {
@@ -684,8 +684,8 @@ function getAlerts(text) {
 }
 
 // ── CACHE ────────────────────────────────────────────────
-const CACHE_KEY    = 'tisza_digest_items_v5';
-const CACHE_TS_KEY = 'tisza_digest_ts_v5';
+const CACHE_KEY    = 'tisza_digest_items_v6';
+const CACHE_TS_KEY = 'tisza_digest_ts_v6';
 const CACHE_TTL    = 60 * 60 * 1000; // 1 hour
 
 function saveToCache() {
