@@ -489,7 +489,7 @@
     }
     .legend-item:last-child { display: none; }
 
-    /* Toolbar — filter buttons scroll horizontally, actions stack below */
+    /* Toolbar — filter buttons wrap, smaller text, actions on own row */
     .toolbar {
       padding: 0.5rem 1rem;
       flex-direction: column;
@@ -498,12 +498,14 @@
     }
     .toolbar-filters {
       display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 2px;
+      flex-wrap: wrap;
+      gap: 0.35rem;
     }
-    .toolbar-filters .tag-btn { flex-shrink: 0; }
+    .toolbar-filters .tag-btn {
+      font-size: 9px;
+      padding: 3px 9px;
+      letter-spacing: 0.06em;
+    }
     .toolbar-right {
       width: 100%;
       justify-content: flex-end;
