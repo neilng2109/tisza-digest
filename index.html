@@ -649,8 +649,8 @@ function getAlerts(text) {
 }
 
 // ── CACHE ────────────────────────────────────────────────
-const CACHE_KEY    = 'tisza_digest_items_v3';
-const CACHE_TS_KEY = 'tisza_digest_ts_v3';
+const CACHE_KEY    = 'tisza_digest_items_v4';
+const CACHE_TS_KEY = 'tisza_digest_ts_v4';
 const CACHE_TTL    = 60 * 60 * 1000; // 1 hour
 
 function saveToCache() {
@@ -1098,10 +1098,10 @@ function renderFeed() {
     const alertStyle = alerts.length ? `style="--alert-color:${alerts[0].color}"` : '';
     const alertClass = alerts.length ? ' has-alert' : '';
 
-    // Use whichever language the card is currently showing
-    const displayTitle   = item.showingTranslation ? item.transTitle   : item.origTitle;
-    const displaySummary = item.showingTranslation ? item.transSummary  : item.origSummary;
-    const displayKP      = item.showingTranslation ? item.transKeyPoints : item.origKeyPoints;
+    // Use whichever language the card is currently showing — fall back to title/summary for safety
+    const displayTitle   = item.showingTranslation ? item.transTitle   : (item.origTitle   || item.title);
+    const displaySummary = item.showingTranslation ? item.transSummary  : (item.origSummary || item.summary);
+    const displayKP      = item.showingTranslation ? item.transKeyPoints : (item.origKeyPoints || item.keyPoints || []);
 
     const kp = (displayKP || []).length
       ? `<ul class="card-points">${(displayKP).map(p=>`<li>${escHtml(p)}</li>`).join('')}</ul>` : '';
