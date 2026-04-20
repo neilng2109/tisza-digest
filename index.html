@@ -607,6 +607,80 @@
     background: var(--accent-light);
   }
 
+  /* ── READER DARK MODE ── */
+  .reader-overlay.dark { background: rgba(0,0,0,0.92); }
+  .reader-panel.dark {
+    background: #1a1917;
+    color: #e8e4dc;
+  }
+  .reader-panel.dark .reader-title { color: #e8e4dc; }
+  .reader-panel.dark .reader-body  { color: #d0ccc4; }
+  .reader-panel.dark .reader-byline,
+  .reader-panel.dark .reader-source { color: #7a7570; }
+  .reader-panel.dark .reader-topbar,
+  .reader-panel.dark .reader-byline { border-color: rgba(255,255,255,0.08); }
+  .reader-panel.dark .reader-close {
+    border-color: #555; color: #ccc;
+  }
+  .reader-panel.dark .reader-close:hover { background: #333; color: #fff; }
+  .reader-panel.dark .reader-body a { color: #e07a63; }
+  .reader-panel.dark .translate-btn {
+    border-color: #4a7ab0; color: #4a7ab0;
+  }
+  .reader-panel.dark .translate-btn:hover { background: #4a7ab0; color: #fff; }
+  .reader-panel.dark .card-link { color: #e07a63; }
+
+  /* dark mode toggle button */
+  .reader-dark-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    border: 1px solid currentColor;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .reader-dark-btn:hover { opacity: 0.7; }
+
+  /* share button */
+  .reader-share-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border: 1px solid var(--muted);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .reader-share-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .reader-panel.dark .reader-share-btn { border-color: #555; color: #aaa; }
+  .reader-panel.dark .reader-share-btn:hover { border-color: #aaa; color: #fff; }
+
+  /* share toast */
+  .share-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    padding: 8px 20px;
+    z-index: 600;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .share-toast.show { opacity: 1; }
+
   @media (max-width: 640px) {
     /* Masthead */
     .masthead { padding: 1.25rem 1rem 1rem; }
@@ -1384,9 +1458,12 @@ async function openReader(url, title, lang, source) {
   overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
 
+  readerCurrentUrl = url;
   document.getElementById('readerSource').textContent = source;
   document.getElementById('readerOrigLink').href = url;
   document.getElementById('readerTranslateBtn').style.display = 'none';
+  document.getElementById('readerShareBtn').style.display = 'none';
+  applyReaderDark();
   document.getElementById('readerContent').innerHTML =
     `<div class="reader-loading"><span class="spin" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--ink);width:14px;height:14px;margin-right:8px;"></span> Loading article…</div>`;
 
@@ -1415,6 +1492,7 @@ async function openReader(url, title, lang, source) {
 
     readerOrigHTML = article.content;
     renderReaderArticle(article.title || title, article.byline, article.content);
+    document.getElementById('readerShareBtn').style.display = '';
 
     if (lang === 'hu') {
       document.getElementById('readerTranslateBtn').style.display = '';
@@ -1460,26 +1538,76 @@ function closeReader() {
   document.body.style.overflow = '';
 }
 
+// ── DARK MODE ────────────────────────────────────────────
+let readerDark = false;
+try { readerDark = localStorage.getItem('tisza_reader_dark') === '1'; } catch(e) {}
+
+function applyReaderDark() {
+  const overlay = document.getElementById('readerOverlay');
+  const panel   = document.getElementById('readerPanel');
+  const btn     = document.getElementById('readerDarkBtn');
+  if (readerDark) {
+    overlay.classList.add('dark');
+    panel.classList.add('dark');
+    btn.textContent = '☀';
+    btn.title = 'Switch to light mode';
+  } else {
+    overlay.classList.remove('dark');
+    panel.classList.remove('dark');
+    btn.textContent = '☾';
+    btn.title = 'Switch to dark mode';
+  }
+}
+
+function toggleReaderDark() {
+  readerDark = !readerDark;
+  try { localStorage.setItem('tisza_reader_dark', readerDark ? '1' : '0'); } catch(e) {}
+  applyReaderDark();
+}
+
+// ── SHARE ────────────────────────────────────────────────
+let readerCurrentUrl = '';
+
+function shareReader() {
+  if (!readerCurrentUrl) return;
+  if (navigator.share) {
+    const title = document.querySelector('.reader-title')?.textContent || 'Tisza Digest';
+    navigator.share({ title, url: readerCurrentUrl }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(readerCurrentUrl).then(() => {
+      const toast = document.getElementById('shareToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }).catch(() => {});
+  }
+}
+
 // Close on Escape key
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReader(); });
+
+// Apply saved dark preference on load
+applyReaderDark();
 </script>
 
 <!-- ── READER OVERLAY ── -->
 <div id="readerOverlay" class="reader-overlay" style="display:none" onclick="if(event.target===this)closeReader()">
-  <div class="reader-panel">
+  <div class="reader-panel" id="readerPanel">
     <div class="reader-topbar">
       <button class="reader-close" onclick="closeReader()">✕ Close</button>
       <div class="reader-topbar-right">
         <span class="reader-source" id="readerSource"></span>
+        <button class="reader-dark-btn" id="readerDarkBtn" onclick="toggleReaderDark()" title="Toggle dark mode">☾</button>
+        <button class="reader-share-btn" id="readerShareBtn" onclick="shareReader()" style="display:none">⬆ Share</button>
         <button class="translate-btn" id="readerTranslateBtn" onclick="translateReaderContent()" style="display:none">🌐 Translate</button>
         <a class="card-link" id="readerOrigLink" href="#" target="_blank" rel="noopener">Read original →</a>
       </div>
     </div>
     <div id="readerContent">
-      <div class="reader-loading"><span class="spin" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--ink);width:14px;height:14px;"></span> Loading article…</div>
+      <div class="reader-loading"><span class="spin" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--ink);width:14px;height:14px;margin-right:8px;"></span> Loading article…</div>
     </div>
   </div>
 </div>
+<div class="share-toast" id="shareToast">Link copied to clipboard</div>
 
 <footer style="border-top:3px double var(--ink);margin-top:4rem;padding:2.5rem 2rem;text-align:center;">
   <p style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:0.6rem;">About Tisza Digest</p>
