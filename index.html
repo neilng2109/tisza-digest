@@ -1279,9 +1279,6 @@ function renderFeed() {
       ? `<a class="card-link" href="${escHtml(item.url)}" target="_blank" rel="noopener">${item.sourceType === 'youtube' ? '▶ Watch on YouTube' : 'Read original →'}</a>`
       : '<span></span>';
 
-    const readerBtn = item.url && item.sourceType !== 'youtube'
-      ? `<button class="reader-btn" onclick="event.stopPropagation();openReader('${escAttr(item.url)}','${escAttr(displayTitle)}','${item.lang}','${escAttr(item.source)}')">⊞ Reader</button>`
-      : '';
 
     const huFlag = item.needsTranslation && !item.showingTranslation
       ? `<span style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">🇭🇺 HU</span>` : '';
@@ -1324,7 +1321,7 @@ function renderFeed() {
       <p class="card-summary">${escHtml(displaySummary)}</p>
       ${kp}
       ${alertBadgesHtml}
-      <div class="card-footer" onclick="event.stopPropagation()">${link}<span style="display:flex;gap:6px;align-items:center;">${readerBtn}${transBtn}</span></div>`;
+      <div class="card-footer" onclick="event.stopPropagation()">${link}${transBtn}</div>`;
 
     html += `
     <article class="card ${item.type}${alertClass}" data-card="${idx}" ${alertStyle} ${cardClick}>
