@@ -1305,7 +1305,12 @@ function renderFeed() {
 
     const isYT   = item.sourceType === 'youtube';
     const ytBadge = isYT ? `<span class="yt-badge">▶ YouTube</span>` : '';
-    const cardClick = item.url ? `onclick="window.open('${escAttr(item.url)}','_blank','noopener')"` : '';
+    // YouTube opens externally; news articles open in Reader by default
+    const cardClick = item.url
+      ? isYT
+        ? `onclick="window.open('${escAttr(item.url)}','_blank','noopener')"`
+        : `onclick="openReader('${escAttr(item.url)}','${escAttr(displayTitle)}','${item.lang}','${escAttr(item.source)}')"`
+      : '';
 
     const bodyContent = `
       <div class="card-meta">
