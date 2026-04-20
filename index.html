@@ -22,6 +22,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23b8341b'/><text x='50%25' y='54%25' font-size='18' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='Georgia,serif' font-weight='700'>T</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.5.0/Readability.js"></script>
 <style>
   :root {
     --ink: #0f0e0c;
@@ -472,6 +473,139 @@
     color: var(--muted);
   }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── READER BUTTON ── */
+  .reader-btn {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border: 1px solid var(--muted);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .reader-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ── READER OVERLAY ── */
+  .reader-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,14,12,0.75);
+    z-index: 500;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 2rem 1rem 4rem;
+  }
+  .reader-panel {
+    background: var(--paper);
+    max-width: 700px;
+    width: 100%;
+    padding: 2.5rem 2.5rem 3rem;
+    position: relative;
+    margin: auto;
+  }
+  .reader-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .reader-close {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reader-close:hover { background: var(--ink); color: var(--paper); }
+  .reader-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .reader-source {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .reader-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+  .reader-byline {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 1.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .reader-body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+  .reader-body p { margin-bottom: 1.2em; }
+  .reader-body h2, .reader-body h3 {
+    font-family: var(--font-display);
+    margin: 1.5em 0 0.5em;
+    line-height: 1.3;
+  }
+  .reader-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5em auto;
+    border-radius: 2px;
+  }
+  .reader-body a { color: var(--accent); }
+  .reader-body ul, .reader-body ol {
+    padding-left: 1.5em;
+    margin-bottom: 1em;
+  }
+  .reader-body li { margin-bottom: 0.3em; }
+  .reader-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .reader-error {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--accent);
+    padding: 1.5rem;
+    border: 1px solid var(--accent);
+    border-left: 3px solid var(--accent);
+    background: var(--accent-light);
+  }
 
   @media (max-width: 640px) {
     /* Masthead */
@@ -1145,6 +1279,10 @@ function renderFeed() {
       ? `<a class="card-link" href="${escHtml(item.url)}" target="_blank" rel="noopener">${item.sourceType === 'youtube' ? '▶ Watch on YouTube' : 'Read original →'}</a>`
       : '<span></span>';
 
+    const readerBtn = item.url && item.sourceType !== 'youtube'
+      ? `<button class="reader-btn" onclick="event.stopPropagation();openReader('${escAttr(item.url)}','${escAttr(displayTitle)}','${item.lang}','${escAttr(item.source)}')">⊞ Reader</button>`
+      : '';
+
     const huFlag = item.needsTranslation && !item.showingTranslation
       ? `<span style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">🇭🇺 HU</span>` : '';
 
@@ -1181,7 +1319,7 @@ function renderFeed() {
       <p class="card-summary">${escHtml(displaySummary)}</p>
       ${kp}
       ${alertBadgesHtml}
-      <div class="card-footer" onclick="event.stopPropagation()">${link}${transBtn}</div>`;
+      <div class="card-footer" onclick="event.stopPropagation()">${link}<span style="display:flex;gap:6px;align-items:center;">${readerBtn}${transBtn}</span></div>`;
 
     html += `
     <article class="card ${item.type}${alertClass}" data-card="${idx}" ${alertStyle} ${cardClick}>
@@ -1233,7 +1371,113 @@ function formatTime(str) {
   try { return new Date(str).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
   catch(e) { return ''; }
 }
+
+// ── READER VIEW ──────────────────────────────────────────
+let readerLang = 'en';
+let readerOrigHTML = '';
+
+async function openReader(url, title, lang, source) {
+  const overlay = document.getElementById('readerOverlay');
+  overlay.style.display = 'flex';
+  overlay.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+
+  document.getElementById('readerSource').textContent = source;
+  document.getElementById('readerOrigLink').href = url;
+  document.getElementById('readerTranslateBtn').style.display = 'none';
+  document.getElementById('readerContent').innerHTML =
+    `<div class="reader-loading"><span class="spin" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--ink);width:14px;height:14px;margin-right:8px;"></span> Loading article…</div>`;
+
+  readerLang = lang;
+  readerOrigHTML = '';
+
+  try {
+    const res = await fetch(`/.netlify/functions/fetch-article?url=${encodeURIComponent(url)}`, {
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!res.ok) throw new Error(`Could not fetch article (${res.status})`);
+    const html = await res.text();
+
+    // Parse into a document, fix relative URLs, then run Readability
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    doc.querySelectorAll('[src]').forEach(el => {
+      try { el.setAttribute('src', new URL(el.getAttribute('src'), url).href); } catch(e) {}
+    });
+    doc.querySelectorAll('[href]').forEach(el => {
+      try { el.setAttribute('href', new URL(el.getAttribute('href'), url).href); } catch(e) {}
+    });
+
+    const article = new Readability(doc).parse();
+    if (!article) throw new Error('Could not extract article text — the site may block automated access.');
+
+    readerOrigHTML = article.content;
+    renderReaderArticle(article.title || title, article.byline, article.content);
+
+    if (lang === 'hu') {
+      document.getElementById('readerTranslateBtn').style.display = '';
+      document.getElementById('readerTranslateBtn').textContent = '🌐 Translate to English';
+      document.getElementById('readerTranslateBtn').disabled = false;
+    }
+  } catch(e) {
+    document.getElementById('readerContent').innerHTML =
+      `<div class="reader-error"><strong>Could not load article</strong>${escHtml(e.message)}<br><br>
+       <a class="card-link" href="${escHtml(url)}" target="_blank" rel="noopener">Open original in new tab →</a></div>`;
+  }
+}
+
+function renderReaderArticle(title, byline, contentHTML) {
+  document.getElementById('readerContent').innerHTML = `
+    <h1 class="reader-title">${escHtml(title)}</h1>
+    ${byline ? `<div class="reader-byline">${escHtml(byline)}</div>` : ''}
+    <div class="reader-body">${contentHTML}</div>`;
+}
+
+async function translateReaderContent() {
+  const btn = document.getElementById('readerTranslateBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Translating…';
+
+  const bodyEl = document.querySelector('.reader-body');
+  if (!bodyEl) return;
+
+  // Grab all text nodes in paragraphs and headings and translate them
+  const elements = Array.from(bodyEl.querySelectorAll('p, h1, h2, h3, li'));
+  for (const el of elements) {
+    const original = el.textContent.trim();
+    if (original.length < 4) continue;
+    const translated = await googleTranslate(original, readerLang);
+    el.textContent = translated;
+  }
+
+  btn.textContent = '✓ Translated';
+}
+
+function closeReader() {
+  document.getElementById('readerOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReader(); });
 </script>
+
+<!-- ── READER OVERLAY ── -->
+<div id="readerOverlay" class="reader-overlay" style="display:none" onclick="if(event.target===this)closeReader()">
+  <div class="reader-panel">
+    <div class="reader-topbar">
+      <button class="reader-close" onclick="closeReader()">✕ Close</button>
+      <div class="reader-topbar-right">
+        <span class="reader-source" id="readerSource"></span>
+        <button class="translate-btn" id="readerTranslateBtn" onclick="translateReaderContent()" style="display:none">🌐 Translate</button>
+        <a class="card-link" id="readerOrigLink" href="#" target="_blank" rel="noopener">Read original →</a>
+      </div>
+    </div>
+    <div id="readerContent">
+      <div class="reader-loading"><span class="spin" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--ink);width:14px;height:14px;"></span> Loading article…</div>
+    </div>
+  </div>
+</div>
 
 <footer style="border-top:3px double var(--ink);margin-top:4rem;padding:2.5rem 2rem;text-align:center;">
   <p style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:0.6rem;">About Tisza Digest</p>
