@@ -1597,7 +1597,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReader(
 // Apply saved dark preference on load
 applyReaderDark();
 
-window.addEventListener('load', fetchAll);
+// Auto-fetch on open
+setTimeout(fetchAll, 100);
 </script>
 
 <!-- ── READER OVERLAY ── -->
