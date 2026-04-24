@@ -993,7 +993,7 @@ async function fetchAll() {
   const label = document.getElementById('btnLabel');
   btn.disabled = true;
   label.innerHTML = '<span class="spin"></span> Loading…';
-  showSkeletons();
+  if (!allItems.length) showSkeletons();
   showProgress(null); // indeterminate while parallel fetches run
 
   let successCount = 0;
