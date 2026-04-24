@@ -1555,6 +1555,7 @@ function applyReaderDark() {
   const overlay = document.getElementById('readerOverlay');
   const panel   = document.getElementById('readerPanel');
   const btn     = document.getElementById('readerDarkBtn');
+  if (!overlay) return;
   if (readerDark) {
     overlay.classList.add('dark');
     panel.classList.add('dark');
@@ -1594,11 +1595,11 @@ function shareReader() {
 // Close on Escape key
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReader(); });
 
-// Apply saved dark preference on load
-applyReaderDark();
-
 // Auto-fetch on open
 setTimeout(fetchAll, 100);
+
+// Apply saved dark preference on load (reader overlay must exist — called again from openReader)
+applyReaderDark();
 </script>
 
 <!-- ── READER OVERLAY ── -->
