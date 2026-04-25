@@ -96,6 +96,19 @@
     margin-top: 0.75rem;
     letter-spacing: 0.1em;
   }
+  .masthead-contact {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    letter-spacing: 0.08em;
+  }
+  .masthead-contact a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(15,14,12,0.15);
+  }
+  .masthead-contact a:hover { color: var(--ink); }
 
   /* ── PROGRESS BAR ── */
   .progress-bar-wrap {
@@ -756,6 +769,7 @@
   <h1>Tisza <span>Digest</span></h1>
   <div class="masthead-sub">Magyar Péter · Tisztelet és Szabadság Párt · Translated daily</div>
   <div class="masthead-date" id="mastheadDate"></div>
+  <div class="masthead-contact"><a href="mailto:news@tiszadigest.com">news@tiszadigest.com</a> · Independent English-language monitor</div>
 </header>
 
 <div class="legend">
@@ -1597,6 +1611,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeReader(
 
 // Auto-fetch on open
 setTimeout(fetchAll, 100);
+
+// Auto-refresh every 20 minutes if reader is not open
+setInterval(() => {
+  if (document.getElementById('readerOverlay').style.display === 'none') fetchAll();
+}, 20 * 60 * 1000);
 
 // Apply saved dark preference on load (reader overlay must exist — called again from openReader)
 applyReaderDark();
