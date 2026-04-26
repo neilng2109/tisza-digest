@@ -47,6 +47,33 @@
     --font-mono: 'IBM Plex Mono', monospace;
   }
 
+  body.dark {
+    --ink: #e2e8f0;
+    --paper: #0f1117;
+    --paper-mid: #161b24;
+    --paper-dark: #1e2535;
+    --accent: #e05a40;
+    --accent-light: rgba(224,90,64,0.12);
+    --muted: #7a8599;
+    --rule: rgba(200,210,230,0.08);
+  }
+  body.dark .error-banner { background: #2a1010; }
+  body.dark .reader-error { background: #2a1010; }
+  .site-dark-btn {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .site-dark-btn:hover { background: var(--ink); color: var(--paper); }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -801,6 +828,7 @@
     <button class="fetch-btn blue" id="translateAllBtn" onclick="translateAll()" style="display:none;">
       <span id="translateAllLabel">🌐 Translate all</span>
     </button>
+    <button class="site-dark-btn" id="site-dark-btn" onclick="toggleSiteDark()">☾ Dark mode</button>
     <button class="fetch-btn" id="fetchBtn" onclick="fetchAll()">
       <span id="btnLabel">Fetch latest</span>
     </button>
@@ -944,6 +972,23 @@ function loadFromCache() {
     return true;
   } catch(e) { return false; }
 }
+
+// ── SITE DARK MODE ───────────────────────────────────────
+let siteDark = false;
+try { siteDark = localStorage.getItem('tisza_dark') === '1'; } catch(e) {}
+
+function applySiteDark() {
+  document.body.classList.toggle('dark', siteDark);
+  document.getElementById('site-dark-btn').textContent = siteDark ? '☀ Light mode' : '☾ Dark mode';
+}
+
+function toggleSiteDark() {
+  siteDark = !siteDark;
+  try { localStorage.setItem('tisza_dark', siteDark ? '1' : '0'); } catch(e) {}
+  applySiteDark();
+}
+
+applySiteDark();
 
 // ── AUTO-TRANSLATE PREF ──────────────────────────────────
 function saveAutoTranslatePref() {
