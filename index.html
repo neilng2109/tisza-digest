@@ -38,8 +38,8 @@
     --paper: #f5f1ea;
     --paper-mid: #ece8e0;
     --paper-dark: #ddd8ce;
-    --accent: #b8341b;
-    --accent-light: #f0e8e5;
+    --accent: #0099cc;
+    --accent-light: rgba(136,232,255,0.15);
     --muted: #6b6560;
     --rule: rgba(15,14,12,0.12);
     --font-display: 'Playfair Display', Georgia, serif;
@@ -52,8 +52,8 @@
     --paper: #0f1117;
     --paper-mid: #161b24;
     --paper-dark: #1e2535;
-    --accent: #e05a40;
-    --accent-light: rgba(224,90,64,0.12);
+    --accent: #88E8FF;
+    --accent-light: rgba(136,232,255,0.12);
     --muted: #7a8599;
     --rule: rgba(200,210,230,0.08);
   }
@@ -882,6 +882,12 @@ const SOURCES = [
     name: 'Politico Europe',
     url: 'https://news.google.com/rss/search?q=%22Magyar+P%C3%A9ter%22+OR+%22Tisza%22+site:politico.eu&hl=en&gl=US&ceid=US:en',
     lang: 'en', filtered: true, type: 'news'
+  },
+  // ── Official party site ──
+  {
+    name: 'Magyar Tisza',
+    url: 'https://news.google.com/rss/search?q=site:magyartisza.hu&hl=hu&gl=HU&ceid=HU:hu',
+    lang: 'hu', filtered: false, type: 'news'
   },
   // ── Hungarian news ──
   {
