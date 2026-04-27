@@ -862,19 +862,9 @@ const CORS_PROXIES = [
 ];
 
 const SOURCES = [
-  // ── English news ──
+  // ── Targeted English press via Google News ────────────────────────
   {
-    name: 'Google News (EN)',
-    url: 'https://news.google.com/rss/search?q=%22Magyar+P%C3%A9ter%22+OR+%22Tisza+party%22&hl=en-HU&gl=HU&ceid=HU:en',
-    lang: 'en', filtered: true, type: 'news'
-  },
-  {
-    name: 'Google News (EU)',
-    url: 'https://news.google.com/rss/search?q=%22Magyar+Peter%22+Hungary+opposition&hl=en&gl=US&ceid=US:en',
-    lang: 'en', filtered: true, type: 'news'
-  },
-  {
-    name: 'Reuters / AP',
+    name: 'Reuters / AP / BBC',
     url: 'https://news.google.com/rss/search?q=%22Magyar+P%C3%A9ter%22+OR+%22Tisza%22+Hungary+(site:reuters.com+OR+site:apnews.com+OR+site:bbc.com)&hl=en&gl=US&ceid=US:en',
     lang: 'en', filtered: true, type: 'news'
   },
@@ -883,17 +873,11 @@ const SOURCES = [
     url: 'https://news.google.com/rss/search?q=%22Magyar+P%C3%A9ter%22+OR+%22Tisza%22+site:politico.eu&hl=en&gl=US&ceid=US:en',
     lang: 'en', filtered: true, type: 'news'
   },
-  // ── Official party site ──
+  // ── Official party site ──────────────────────────────────────────
   {
     name: 'Magyar Tisza',
     url: 'https://news.google.com/rss/search?q=site:magyartisza.hu&hl=hu&gl=HU&ceid=HU:hu',
     lang: 'hu', filtered: false, type: 'news'
-  },
-  // ── Hungarian news ──
-  {
-    name: 'Google News (HU)',
-    url: 'https://news.google.com/rss/search?q=%22Magyar+P%C3%A9ter%22+OR+%22Tisza+P%C3%A1rt%22&hl=hu&gl=HU&ceid=HU:hu',
-    lang: 'hu', filtered: true, type: 'news'
   },
   {
     name: 'Telex',
