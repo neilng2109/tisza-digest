@@ -1552,6 +1552,18 @@ async function openReader(url, title, lang, source) {
   readerLang = lang;
   readerOrigHTML = '';
 
+  // Google News redirect URLs always land on blocked publisher sites — show fallback immediately
+  if (url.includes('news.google.com')) {
+    document.getElementById('readerContent').innerHTML = `
+      <div style="padding:2rem;">
+        <p style="font-family:var(--font-body);font-size:15px;line-height:1.7;color:var(--ink);margin-bottom:1.5rem;">${title}</p>
+        <a href="${url}" target="_blank" rel="noopener" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:8px 18px;background:var(--accent);color:#fff;text-decoration:none;display:inline-block;"
+        >Read original →</a>
+      </div>`;
+    document.getElementById('readerShareBtn').style.display = '';
+    return;
+  }
+
   try {
     const res = await fetch(`/.netlify/functions/fetch-article?url=${encodeURIComponent(url)}`, {
       signal: AbortSignal.timeout(12000)
