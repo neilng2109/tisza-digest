@@ -1,0 +1,55 @@
+# Tisza Digest
+
+Tisza Digest (tiszadigest.com) is a free, independent English-language monitor of Magyar Péter and the Tisza Party (Tisztelet és Szabadság — Respect and Freedom) in Hungary. It aggregates and translates news from Hungarian and international sources, updated automatically throughout the day.
+
+## What It Does
+
+- Aggregates news about Magyar Péter and Tisza Party from Hungarian and international RSS sources
+- Filters content by keywords to surface only relevant stories
+- Classifies stories with topic alert tags: EU, Election, Court, Immigration, Corruption, Economy
+- In-page reader mode with full article text
+- YouTube video feed from key Hungarian political channels
+- Dark mode support
+- Completely free, no login required
+
+## Who It Covers
+
+- **Magyar Péter** — Hungarian opposition politician and leader of Tisza Party
+- **Tisza Party** (Tisztelet és Szabadság / Respect and Freedom) — Hungarian centre-right opposition party
+- Hungarian domestic politics, EU relations, elections, and rule-of-law issues
+
+## Sources
+
+### Hungarian News (in Hungarian)
+- Telex — Magyar Péter dedicated feed
+- Telex (Belföldi) — Hungarian domestic news
+- 444 — Independent Hungarian news outlet
+
+### International English Press
+- Euronews
+- VSquare — Central European investigative journalism
+- Balkan Insight — Southeast and Central European reporting
+- Transitions Online — Central/Eastern European affairs
+
+### YouTube Channels
+- Pottyondy Edina — Hungarian political commentator
+- Magyar Péter — official channel
+- Partizán — independent Hungarian political media
+- ATV — Hungarian commercial news broadcaster
+- RTL Hírek — Hungarian RTL news
+- RTL Hungary
+
+## Topic Alert Tags
+
+Stories are automatically tagged by topic:
+- **EU** — European Union, NATO, Brussels
+- **Election** — elections, voting, campaigns, polls
+- **Court** — legal proceedings, prosecution, trials
+- **Immigration** — migration, border, refugees
+- **Corruption** — corruption, fraud, scandal
+- **Economy** — GDP, inflation, budget, cost of living
+
+## Contact
+
+- Email: news@tiszadigest.com
+- Website: https://tiszadigest.com

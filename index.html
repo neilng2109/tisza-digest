@@ -788,6 +788,65 @@
     footer { padding: 1.5rem 1rem; }
   }
 </style>
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://tiszadigest.com/#app",
+      "name": "Tisza Digest",
+      "url": "https://tiszadigest.com",
+      "description": "Free independent English-language monitor of Magyar Péter and the Tisza Party (Tisztelet és Szabadság) in Hungary. Aggregates and translates news from Hungarian and international sources, updated automatically throughout the day.",
+      "applicationCategory": "NewsApplication",
+      "operatingSystem": "Web",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "GBP"
+      },
+      "featureList": [
+        "Live RSS aggregation from Hungarian and international sources",
+        "Keyword filtering for Magyar Péter and Tisza Party coverage",
+        "Topic alert tags: EU, Election, Court, Immigration, Corruption, Economy",
+        "In-page article reader mode",
+        "YouTube channel feed integration",
+        "Dark mode",
+        "Auto-refresh throughout the day"
+      ],
+      "about": [
+        {
+          "@type": "Person",
+          "name": "Magyar Péter",
+          "description": "Hungarian opposition politician and leader of the Tisza Party"
+        },
+        {
+          "@type": "Organization",
+          "name": "Tisza Party",
+          "alternateName": "Tisztelet és Szabadság",
+          "description": "Hungarian centre-right opposition party (Respect and Freedom)"
+        }
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "news@tiszadigest.com",
+        "contactType": "editorial"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://tiszadigest.com/#website",
+      "url": "https://tiszadigest.com",
+      "name": "Tisza Digest",
+      "description": "Independent English-language monitor of Magyar Péter and Tisza Party news",
+      "publisher": { "@id": "https://tiszadigest.com/#app" },
+      "inLanguage": "en"
+    }
+  ]
+}
+</script>
 </head>
 <body>
 

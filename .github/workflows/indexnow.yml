@@ -1,0 +1,23 @@
+name: Ping IndexNow on Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping IndexNow — tiszadigest.com
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d '{
+              "host": "tiszadigest.com",
+              "key": "c3e5a7b9d1f2e4c6a8b0d2f4e6a8c0d2",
+              "keyLocation": "https://tiszadigest.com/c3e5a7b9d1f2e4c6a8b0d2f4e6a8c0d2.txt",
+              "urlList": [
+                "https://tiszadigest.com/"
+              ]
+            }'
+          echo " — tiszadigest.com pinged"
